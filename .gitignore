@@ -1,0 +1,26 @@
+
+# Node.js
+node_modules/
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+blynk_config.py
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+.packages
+
+# IDE
+.vscode/
+.idea/
+
+# Sensitive files
+*.pem
+*.key
