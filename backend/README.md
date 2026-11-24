@@ -1,48 +1,34 @@
 # Smart Parking Backend
 
-Node.js + Express + MongoDB REST API for the Smart Parking IoT project.
+Node.js, Express and MongoDB REST API for four parking spaces: A1, A2, B1 and B2.
 
-## Requirements
+## Setup
 
-- Node.js 18 or newer
-- MongoDB local service or a MongoDB Atlas database
+Requires Node.js 18+ and a running MongoDB instance or MongoDB Atlas cluster.
 
-## Setup (Windows PowerShell)
+From this folder:
 
-1. Open a terminal in the repository's `backend` folder.
-2. Install dependencies:
+```powershell
+npm install
+Copy-Item .env.example .env
+```
 
-   ```powershell
-   npm install
-   ```
+Edit `.env` and set `MONGODB_URI`. Keep `.env` private; it is ignored by Git.
 
-3. Create your environment file:
+Start the API:
 
-   ```powershell
-   Copy-Item .env.example .env
-   ```
+```powershell
+npm run dev
+```
 
-4. Open `.env` and set `MONGODB_URI`. For local MongoDB, the example URI works if MongoDB is running. For Atlas, paste your connection string and replace its password locally. Never commit `.env`.
-5. Start the API:
+## API
 
-   ```powershell
-   npm start
-   ```
+- `GET /api/health` — API and database status.
+- `POST /api/parking` — save all four slot states.
+- `GET /api/parking` — latest slot state.
+- `GET /api/parking/history?limit=20` — recent snapshots (1–100).
 
-The API listens on port 3000.
-
-## Endpoints
-
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| GET | `/api/health` | API and database health |
-| POST | `/api/parking` | Save the latest camera slot states |
-| GET | `/api/parking` | Read the latest parking state |
-| GET | `/api/parking/history?limit=20` | Read recent saved snapshots (1–100) |
-
-### Camera POST payload
-
-The existing Python detector posts this structure:
+POST JSON example:
 
 ```json
 {
@@ -52,18 +38,16 @@ The existing Python detector posts this structure:
 }
 ```
 
-Slot values are `0` for available and `1` for occupied. The server merges partial updates into an eight-slot state (A1–B4), recalculates totals, and stores a timestamped snapshot. The server recalculates availability for the full eight-slot layout; therefore, if the camera currently detects only four slots, the other four remain available until their states are supplied.
+Use 0 for available and 1 for occupied. The API validates the four slot IDs and calculates counts itself.
 
-## Connect the Python detector
+## Python detector
 
-The detector currently uses `http://localhost:3000/api/parking`. Keep that address when Python and this backend run on the same laptop. If the backend runs on a different computer, change `localhost` to that computer's LAN IP address. A phone/emulator also needs a reachable host address; `localhost` on the phone refers to the phone itself.
+Keep `API_URL = "http://localhost:3000/api/parking"` when Python and the backend run on the same computer.
 
-## Flutter app integration
+## Flutter networking
 
-The REST API is now available, but the current Flutter `main.dart` still uses hard-coded demo data. Configure the app to request `GET /api/parking` from a reachable backend URL and refresh periodically before describing the dashboard as live.
+- Windows desktop / same computer: `http://localhost:3000`
+- Android emulator: `http://10.0.2.2:3000`
+- Physical phone: use the laptop's LAN IPv4 address, e.g. `http://192.168.x.x:3000`, and ensure both devices are on the same Wi-Fi. Allow Node.js through Windows Firewall for private networks.
 
-## Notes
-
-- Do not expose the API to the public internet without authentication and rate limiting.
-- Configure `CORS_ORIGIN` to the exact app origin when deploying a browser-based client.
-- This backend stores snapshots; it does not yet ingest ESP32 gate or ultrasonic sensor telemetry.
+The Flutter dashboard must call `GET /api/parking`; it is not live until that integration is running.
